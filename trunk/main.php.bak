@@ -1,0 +1,142 @@
+<?php
+require 'gallery.php';
+require 'init.php';
+
+echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"';
+echo ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">';
+echo '<html>';
+echo '<head>';
+echo ' <title>Gallery</title>';
+echo ' <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />';
+echo ' <style type="text/css" media="screen">@import "', $WEB_ROOT, '/gallery.css.php?gallery=', $GALLERY, '";</style>';
+echo ' <script type="text/javascript" src="', $WEB_ROOT, '/prototype.js"></script>';
+echo ' <script type="text/javascript" src="', $WEB_ROOT, '/scriptaculous.js?load=effects"></script>';
+echo ' <script type="text/javascript" src="', $WEB_ROOT, '/gallery.js.php?gallery=', $GALLERY, '"></script>';
+echo '</head>';
+echo '<body>';
+
+if ($GALLERY === false) {
+	if ($_GET['list']) {
+		include 'list.php';
+		echo '<ol style="text-align:left;">';
+		foreach ($galleries as $value) {
+			echo '<li><a href="', $value, '">', $value, '</a></li>';
+		}
+		echo '</ol>';
+
+	} else {
+			echo '<p>Woops, gallery not found</p>';
+	}
+} else {
+	$gallery = new Gallery($GALLERY_ROOT, $_GET["vip"]);
+
+	echo '<table class="images">';
+	echo '<caption>';
+		if ($gallery->getCaption()) {
+			echo $gallery->getCaption();
+		} else {
+			echo 'Gallery';
+		}
+	echo '</caption>';
+
+	for ($i=0, $toi=count($gallery->images); $i<$toi; $i++) {
+		$img = $gallery->images[$i];
+
+		if ($i % ROWS == 0) {
+			echo "<tr>\n";
+		}
+
+		$commentClass = '';
+		$cookieName = preg_replace('/[^\d\w]/', '_', $img->getName());
+		if (filemtime($GALLERY_ROOT . '/.data/' . $img->getName() . '.xml') > $_COOKIE[$cookieName]) {
+			$commentClass = ' class="newcomments"';
+		}
+		echo "\t<td", $commentClass, '><a href="', $WEB_GALLERY_ROOT, '/', $img->getName(), '" rel="lightbox[g]">';
+
+		if ($img->hasThumbnail(true)) {
+			echo '<img ',
+				'src="', $WEB_GALLERY_ROOT, '/t/', $img->getName(), '" ',
+				'alt="', $img->getName(), '" />';
+		} else {
+			echo '<img ',
+				'src="', $WEB_GALLERY_ROOT, '/', $img->getName(), '" ',
+				'alt="', $img->getName(), '" ',
+				'width="', MAX_WIDTH, '" ',
+				'height="', MAX_HEIGHT, '" />';
+		}
+
+		echo '</a>';
+		if ($img->getCaption()) {
+			echo '<div>', $img->getCaption(), '</div>';
+		}
+		echo "</td>\n";
+
+		if (($i+1) % ROWS == 0) {
+			echo "</tr>\n";
+			flush();// force flush
+		}
+	}
+	if ($i % ROWS != 0) {
+		for ($i=ROWS-($i%ROWS); $i>0; $i--) {
+			echo '<td>&nbsp;</td>';
+		}
+		echo '</tr>';
+	}
+	echo '</table>';
+	if (count($gallery->documents) > 0) {
+		echo '<div id="files">Citi faili</div><ul>';
+		for ($i=0, $toi=count($gallery->documents); $i<$toi; $i++) {
+			$doc = $gallery->documents[$i];
+			echo '<li><a href="', $doc->getName(), '">', $doc->getCaption(), '</a></li>';
+		}
+		echo '</ul>';
+	}
+	if (count($gallery->galleries) > 0) {
+		echo '<div id="galleries">Citas galerijas</div><ul>';
+		for ($i=0, $toi=count($gallery->galleries); $i<$toi; $i++) {
+			$gal = $gallery->galleries[$i];
+			echo '<li><a href="', $gal->getName(), '">', $gal->getCaption(), '</a></li>';
+		}
+		echo '</ul>';
+	}
+}
+echo '<div id="footer">&copy; ', spambot('japets', 'miga.lv'), '</div>';
+
+if (defined('UACCT')) {
+	echo '<script src="http://www.google-analytics.com/urchin.js" type="text/javascript">';
+	echo '</script>';
+	echo '<script type="text/javascript">';
+	echo '_uacct = "', UACCT, '";';
+	echo 'urchinTracker();';
+	echo '</script>';
+}
+
+echo '</body>';
+echo '</html>';
+
+// {{{ spambot()
+function spambot() {
+	if (func_num_args() == 1) {
+		$email = func_get_arg(0);
+		$temp = explode('@', $email);
+		if (count($temp) != 2) {
+			return $email;
+		}
+		$name = $temp[0];
+		$domain = $temp[1];
+	} elseif (func_num_args() == 2) {
+		$name = func_get_arg(0);
+		$domain = func_get_arg(1);
+	} else {
+		return;// eh, pietruukst exception :)
+	}
+
+	return '<a class="addr" href="#"><span class="addr_name">'
+	.$name
+	.'</span><span class="addr_suns"> et </span><span class="addr_domain">'
+	.$domain
+	.'</span></a>';
+}
+
+// }}}
+?>
