@@ -210,9 +210,12 @@ ul a:hover {
 
 /* New comments */
 td.newcomments {/* td */}
-td.newcomments > a {/* link */}
-td.newcomments > a > img {/* image */}
-td.newcomments > div {/* caption div */}
+td.newcomments a {/* link */}
+td.newcomments a img {/* image */}
+td.newcomments div {
+	/* caption div */
+	color: #A25A1A;
+	}
 
 /* comments view */
 #imageCommentsContainer {/* div */}
