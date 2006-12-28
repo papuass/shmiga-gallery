@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gallery>
+	<caption>Galerija</caption>
+	<images>
+		<image name="test.gif" vip="*"><![CDATA[GIF image]]></image>
+		<image name="test.jpe" vip="*"><![CDATA[JPE image]]></image>
+		<image name="test.jpeg" vip="*"><![CDATA[JPEG image]]></image>
+		<image name="test.jpg" vip="*"><![CDATA[JPG image]]></image>
+		<image name="test.png" vip="*"><![CDATA[PNG image]]></image>
+	</images>
+	<documents>
+		<document name="about.txt" vip="*"><![CDATA[Other file (txt)]]></document>
+	</documents>
+	<galleries>
+		<gallery name="sub" vip="*">First subgallery</gallery>
+		<gallery name="sub2" vip="*">Second subgallery</gallery>
+		<gallery name="sub3" vip="*">Third subgallery</gallery>
+	</galleries>
+</gallery>
