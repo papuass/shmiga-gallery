@@ -1,0 +1,16 @@
+Simple gallery script.
+
+Data storage in XML files.
+Tries to guess gallery structure, if no XML file is given.
+Tries to create thumbnail images.
+
+See gallery/example for more details :)
+Note! Property "vip" in data.xml files is "Security Through Obscurity"!!!
+
+Please let me know, if you use or modify this script:
+ japets miga lv
+
+Project home page:
+ http://code.google.com/p/shmiga-gallery/
+
+P.S. change defined properties in gallery.php file if you have to.
