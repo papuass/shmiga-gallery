@@ -1,16 +1,38 @@
 <?
 require_once('init.php');
 
-// {{{ class Gallery {}
-class Gallery {
+define('MAX_WIDTH',   200);
+define('MAX_HEIGHT',  150);
+
+// {{{ class Element {}
+class Element {
 // {{{ properties
-	// fuck getters, fuck setters, PHP is not a real OOPL anyway!
+	var $caption;
+
+// }}}
+// {{{ setCaption()
+	function setCaption($data) {
+		$this->caption = $data;
+	}
+
+// }}}
+// {{{ getCaption()
+	function getCaption() {
+		return $this->caption;
+	}
+
+// }}}
+}
+
+// }}}
+// {{{ class Gallery {}
+class Gallery extends Element {
+// {{{ properties
 	var $path;
 	var $name;
-	var $caption;
-	var $images     = array();
-	var $documents  = array();
-	var $galleries  = array();
+	var $images;
+	var $documents;
+	var $galleries;
 	var $vip;
 
 	var $XMLPart;
@@ -18,14 +40,24 @@ class Gallery {
 	var $XMLObject;
 
 // }}}
-// {{{ Gallery($path, $vip)
+// {{{ constructor
 	function Gallery($path, $vip) {
 		$this->path = &$path;
 		$this->name = basename($path).'/';
 
+		$this->images = array();
+		$this->documents = array();
+		$this->galleries = array();
+
 		$this->vip = &$vip;
 
 		$this->parse();
+	}
+
+// }}}
+// {{{ getName()
+	function getName() {
+		return $this->name;
 	}
 
 // }}}
@@ -57,17 +89,17 @@ class Gallery {
 				$hrens[] = $file;
 			} elseif (Gallery::isDocument($this->path.'/'.$file)) {
 				$this->documents[] = new Document($file);
-			} elseif (Gallery::isGallery($file)) {
-				$gal = new SubGallery($file, $this->vip);
+			} elseif (Gallery::isGallery($this->path.'/'.$file)) {
+				$gal = new SubGallery($this->path.'/'.$file.'/', $this->vip);
+				$gal->setCaption($gal->getName());
 				$this->galleries[] = $gal;
 			}
 		}
 		function cmp($a, $b) {
-			return strcmp($a->name, $b->name);
+			return strcmp($a->getName(), $b->getName());
 		}
-		usort($this->images, 'cmp');
-		usort($this->documents, 'cmp');
-		usort($this->galleries, 'cmp');
+		usort($this->images, "cmp");
+//array_multisort($hrens, SORT_ASC, SORT_STRING, $this->images);
 	}
 
 // }}}
@@ -81,10 +113,9 @@ class Gallery {
 
 		if (!($fp = fopen($this->path.'/.data/data.xml', "r"))) {
 			if (!($fp = fopen($this->path.'/data.xml', "r"))) {
-				die("Can not open data.xml");
+				die("Can not open XML input file");
 			}
 		}
-
 		while ($data = fread($fp, 4096)) {
 			if (!xml_parse($parser, $data, feof($fp))) {
 				die(sprintf("XML error: %s at line %d",
@@ -92,7 +123,6 @@ class Gallery {
 				 xml_get_current_line_number($xml_parser)));
 			}
 		}
-
 		xml_parser_free($parser);
 	}
 
@@ -115,14 +145,12 @@ class Gallery {
 					if ($name == 'document' && $this->permitted($attrs['vip'])) {
 						$this->XMLItem = &$name;
 						$this->XMLObject = new Document($attrs['name']);
-						$this->XMLObject->caption = '';
 					}
 				break;
 				case "galleries":
 					if ($name == 'gallery' && $this->permitted($attrs['vip'])) {
 						$this->XMLItem = &$name;
 						$this->XMLObject = new SubGallery($attrs['name'], $this->vip);
-						$this->XMLObject->caption = '';
 					}
 				break;
 			}
@@ -165,46 +193,44 @@ class Gallery {
 // {{{ XMLCharacterData()
 	function XMLCharacterData($parser, $data) {
 		if ($this->XMLPart == 'caption') {
-			$this->caption = $data;
+			$this->setCaption($data);
 		} else {
 			switch ($this->XMLItem) {
 				case 'image':
-					$this->XMLObject->caption .= $data;
+					$this->XMLObject->setCaption($data);
 				break;
 				case 'document':
-					$this->XMLObject->caption .= $data;
+					$this->XMLObject->setCaption($data);
 				break;
 				case 'gallery':
-					$this->XMLObject->caption .= $data;
+					$this->XMLObject->setCaption($data);
 				break;
 			}
 		}
 	}
 
 // }}}
-// {{{ Gallery::isImage()
+// {{{ isImage()
 	function isImage($file) {
 		if (!is_file($file)) return false;
 		$info = pathInfo($file);
-		return in_array(strToLower($info['extension']), Array('jpg', 'jpeg', 'jpe', 'png', 'gif' /* Can be unsupported for resizing */));
-			//'bmp', 'dib' - less traffic, less problems, and i do not know how to rezise...
+		return in_array(strToLower($info['extension']), Array('jpg', 'jpeg', 'jpe', 'png', 'gif' /* Can be unsupported for resizing */));//'bmp', 'dib' - less trafic, less problems, and i do not know how to rezise...
 	}
 
 // }}}
-// {{{ Gallery::isDocument()
+// {{{ isDocument()
 	function isDocument($file) {
 		if (!is_file($file)) return false;
 		$info = pathInfo($file);
-		return in_array(strToLower($info['extension']), Array('mpg', 'avi'));
+		return in_array(strToLower($info['extension']), Array('mpg'));
 	}
 
 // }}}
-// {{{ Gallery::isGallery()
+// {{{ isGallery()
 	function isGallery($file) {
-		if (!is_dir($file))  return false;
-		echo $file[0];
-		if ($file[0] == '.') return false;
-		return !in_array($f, Array('t'));
+		if (!is_dir($file)) return false;
+		$f = basename($file);
+		return !in_array($f, Array('.', '..', 't'));
 	}
 
 // }}}
@@ -212,16 +238,21 @@ class Gallery {
 
 // }}}
 // {{{ class Document {}
-class Document {
+class Document extends Element {
 // {{{ properties
 	var $name;
-	var $caption;
 
 // }}}
 // {{{ constructor
 	function Document($name) {
-		$this->name = &$name;
+		$this->name = $name;
 		$this->caption = $name;
+	}
+
+// }}}
+// {{{ getName()
+	function getName() {
+		return $this->name;
 	}
 
 // }}}
@@ -229,17 +260,21 @@ class Document {
 
 // }}}
 // {{{ class SubGallery {}
-class SubGallery {
+class SubGallery extends Element {
 // {{{ properties
 	var $name;
-	var $caption;
 
 // }}}
 // {{{ constructor
 	function SubGallery($name, $vip) {
-		$this->name = &$name;
-		$this->caption = $name;
+		$this->name = $name;
 		$this->vip = &$vip;
+	}
+
+// }}}
+// {{{ getName()
+	function getName() {
+		return $this->name;
 	}
 
 // }}}
@@ -247,17 +282,15 @@ class SubGallery {
 
 // }}}
 // {{{ class Image {}
-class Image {
+class Image extends Document {
 // {{{ properties
-	var $name;
-	var $caption;
 	var $path;
 
 // }}}
 // {{{ constructor
 	function Image($path, $name) {
-		$this->path = &$path;
-		$this->name = &$name;
+		$this->path = $path;
+		$this->name = $name;
 	}
 
 // }}}
@@ -278,22 +311,11 @@ class Image {
 	function createThumbnail() {
 			// create thumbnail directory
 		if (!file_exists($this->path.'/t')) {
-			if (!is_writeable($this->path)) {
-				return false;
-			}
+			if (!is_writeable($this->path)) return false;
 
-			if (!mkdir($this->path.'/t')) {
-				return false;
-			}
-			if (defined('DIRS_CHMOD')) {
-				chmod($this->path.'/t', DIRS_CHMOD);
-			}
-			if (defined('DIRS_CHGRP')) {
-				chgrp($this->path.'/t', DIRS_CHGRP);
-			}
-			if (defined('DIRS_CHOWN')) {
-				chown($this->path.'/t', DIRS_CHOWN);
-			}
+			mkdir($this->path.'/t');
+			chmod($this->path.'/t', DIRS_CHMOD);
+			chgrp($this->path.'/t', DIRS_CHGRP);
 		} elseif (!is_writeable($this->path.'/t')) {
 			return false;
 		}
@@ -340,8 +362,8 @@ class Image {
 			// output type
 		$types = imageTypes();
 		if (!($type & $types)) {
-			if (IMG_JPG & $types)       $type = IMG_JPG;
-			else if (IMG_PNG & $types)  $type = IMG_PNG;
+			if (IMG_PNG & $types)       $type = IMG_PNG;
+			else if (IMG_JPG & $types)  $type = IMG_JPG;
 			else if (IMG_GIF & $types)  $type = IMG_GIF;
 			else if (IMG_WBMP & $types) $type = IMG_WBMP;
 			else return false;
@@ -356,7 +378,7 @@ class Image {
 			// save thumbnail
 		imageinterlace($out, 1);
 		switch ($type) {
-			case IMG_JPG:  imageJPEG($out, $target, 75); break;
+			case IMG_JPG:  imageJPEG($out, $target, 65); break;
 			case IMG_PNG:  imagePNG($out, $target);      break;
 			case IMG_GIF:  imageGIF($out, $target);      break;
 			case IMG_WBMP: imageWBMP($out, $target);     break;
@@ -366,15 +388,8 @@ class Image {
 		imageDestroy($out);
 		imageDestroy($in);
 
-		if (defined('FILES_CHMOD')) {
-			chmod($target, FILES_CHMOD);
-		}
-		if (defined('FILES_CHGRP')) {
-			chgrp($target, FILES_CHGRP);
-		}
-		if (defined('FILES_CHOWN')) {
-			chown($target, FILES_CHOWN);
-		}
+		chmod($target, FILES_CHMOD);
+		chgrp($target, FILES_CHGRP);
 		return true;
 	}
 
