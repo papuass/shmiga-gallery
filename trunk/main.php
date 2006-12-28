@@ -8,10 +8,9 @@ echo '<html>';
 echo '<head>';
 echo ' <title>Gallery</title>';
 echo ' <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />';
-echo ' <style type="text/css" media="screen">@import "', $WEB_ROOT, '/gallery.css.php?gallery=', $GALLERY, '";</style>';
-echo ' <script type="text/javascript" src="', $WEB_ROOT, '/prototype.js"></script>';
-echo ' <script type="text/javascript" src="', $WEB_ROOT, '/scriptaculous.js?load=effects"></script>';
-echo ' <script type="text/javascript" src="', $WEB_ROOT, '/gallery.js.php?gallery=', $GALLERY, '"></script>';
+echo ' <style type="text/css" media="screen">@import "', $WEB_ROOT, '/lightbox.css.php?gallery=', $GALLERY, '";</style>';
+echo ' <script type="text/javascript" src="', $WEB_ROOT, '/spica.js"></script>';
+echo ' <script type="text/javascript" src="', $WEB_ROOT, '/lightbox_plus.js.php?gallery=', $GALLERY, '"></script>';
 echo '</head>';
 echo '<body>';
 
@@ -30,13 +29,9 @@ if ($GALLERY === false) {
 } else {
 	$gallery = new Gallery($GALLERY_ROOT, $_GET['vip']);
 
-	echo '<h1>';
-		if ($gallery->getCaption()) {
-			echo $gallery->getCaption();
-		} else {
-			echo 'Gallery';
-		}
-	echo '</h1>';	
+	if ($gallery->caption) {
+			echo '<h1>', $gallery->caption, '</h1>';
+	}
 	echo '<table class="images">';
 
 	for ($i=0, $toi=count($gallery->images); $i<$toi; $i++) {
@@ -47,33 +42,29 @@ if ($GALLERY === false) {
 		}
 
 		$commentClass = '';
-		$cookieName = preg_replace('/[^\d\w]/', '_', $img->getName());
-		if (filemtime($GALLERY_ROOT . '/.data/' . $img->getName() . '.xml') > $_COOKIE[$cookieName]) {
+		$cookieName = preg_replace('/[^\d\w]/', '_', $img->name);
+		if (filemtime($GALLERY_ROOT . '/.data/' . $img->name . '.xml') > $_COOKIE[$cookieName]) {
 			$commentClass = ' class="newcomments"';
 		}
-		echo "\t<td", $commentClass, '><a href="', $WEB_GALLERY_ROOT, '/', $img->getName(), '" rel="lightbox[g]">';
+		echo "\t<td", $commentClass, '><a href="', $WEB_GALLERY_ROOT, '/', $img->name, '" rel="lightbox[g]">';
 
 		if ($img->hasThumbnail(true)) {
-			echo '<img ',
-				'src="', $WEB_GALLERY_ROOT, '/t/', $img->getName(), '" ',
-				'alt="', $img->getName(), '" />';
+			echo '<img src="', $WEB_GALLERY_ROOT, '/t/', $img->name, '" alt="', $img->name, '" />';
 		} else {
-			echo '<img ',
-				'src="', $WEB_GALLERY_ROOT, '/', $img->getName(), '" ',
-				'alt="', $img->getName(), '" ',
-				'width="', MAX_WIDTH, '" ',
-				'height="', MAX_HEIGHT, '" />';
+			echo '<img src="', $WEB_GALLERY_ROOT, '/', $img->name, '" alt="', $img->name, '" width="', MAX_WIDTH, '" height="', MAX_HEIGHT, '" />';
 		}
 
 		echo '</a>';
-		if ($img->getCaption()) {
-			echo '<div>', $img->getCaption(), '</div>';
+		if ($img->caption) {
+			echo '<div>', $img->caption, '</div>';
 		}
 		echo "</td>\n";
 
 		if (($i+1) % ROWS == 0) {
 			echo "</tr>\n";
-			flush();// force flush
+				// force flush
+			ob_flush();
+			flush();
 		}
 	}
 	if ($i % ROWS != 0) {
@@ -87,7 +78,7 @@ if ($GALLERY === false) {
 		echo '<div id="files">Citi faili</div><ul id="other">';
 		for ($i=0, $toi=count($gallery->documents); $i<$toi; $i++) {
 			$doc = $gallery->documents[$i];
-			echo '<li><a href="', $doc->getName(), '">', $doc->getCaption(), '</a></li>';
+			echo '<li><a href="', $doc->name, '">', $doc->caption, '</a></li>';
 		}
 		echo '</ul>';
 	}
@@ -95,7 +86,7 @@ if ($GALLERY === false) {
 		echo '<div id="galleries">Citas galerijas</div><ul id="galls">';
 		for ($i=0, $toi=count($gallery->galleries); $i<$toi; $i++) {
 			$gal = $gallery->galleries[$i];
-			echo '<li><a href="', $gal->getName(), '">', $gal->getCaption(), '</a></li>';
+			echo '<li><a href="', $gal->name, '">', $gal->caption, '</a></li>';
 		}
 		echo '</ul>';
 	}
