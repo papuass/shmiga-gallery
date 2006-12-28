@@ -12,8 +12,7 @@
 		<document name="about.txt" vip="*"><![CDATA[Other file (txt)]]></document>
 	</documents>
 	<galleries>
-		<gallery name="sub" vip="*">First subgallery</gallery>
+		<gallery name="sub1" vip="*">First subgallery</gallery>
 		<gallery name="sub2" vip="*">Second subgallery</gallery>
-		<gallery name="sub3" vip="*">Third subgallery</gallery>
 	</galleries>
 </gallery>
